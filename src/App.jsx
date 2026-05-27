@@ -1,35 +1,21 @@
-import { useState } from 'react';
-
 export default function App() {
-  const [data, setData] = useState(null);
-  const [status, setStatus] = useState("In attesa...");
-
-  const handleSearch = async () => {
-    setStatus("Caricamento in corso...");
+  const testFetch = async () => {
     try {
-      const res = await fetch(`/api/summoner?name=STZ%20Meliodas&tag=CXXVI`);
-      const json = await res.json();
-      setData(json);
-      setStatus("Dati ricevuti!");
-    } catch (err) {
-      setStatus("Errore nel recupero dati");
+      const response = await fetch('/api/summoner?name=STZ%20Meliodas&tag=CXXVI');
+      const data = await response.json();
+      // Scriviamo direttamente nel body per vedere se il DOM risponde
+      document.body.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+    } catch (e) {
+      document.body.innerHTML = "Errore di connessione al server";
     }
   };
 
   return (
-    <div style={{ padding: '20px', color: 'white', background: '#333', minHeight: '100vh' }}>
-      <h1>LoL Debugger</h1>
-      <button onClick={handleSearch} style={{ padding: '10px' }}>Esegui Ricerca Test</button>
-      
-      <p>Stato: {status}</p>
-
-      {/* Questa parte è protetta: se data è nullo, non fa nulla */}
-      {data && (
-        <div style={{ marginTop: '20px', padding: '10px', background: '#000' }}>
-          <h3>Dati ricevuti:</h3>
-          <pre>{JSON.stringify(data, null, 2)}</pre>
-        </div>
-      )}
+    <div style={{ padding: '50px' }}>
+      <h1>Test Semplice</h1>
+      <button onClick={testFetch} style={{ padding: '20px', fontSize: '20px' }}>
+        Clicca per visualizzare i dati grezzi
+      </button>
     </div>
   );
 }
