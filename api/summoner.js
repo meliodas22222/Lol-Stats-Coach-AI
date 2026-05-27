@@ -13,12 +13,8 @@ export default async function handler(req, res) {
     });
     const summoner = await sumRes.json();
 
-    const rankRes = await fetch(`https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/${summoner.id}`, {
-      headers: { "X-Riot-Token": apiKey }
-    });
-    const rank = await rankRes.json();
-
-    return res.status(200).json({ account, summoner, rank });
+    // Abbiamo rimosso la chiamata rank che dava 403
+    return res.status(200).json({ account, summoner });
   } catch (error) {
     return res.status(500).json({ error: "Errore server" });
   }
