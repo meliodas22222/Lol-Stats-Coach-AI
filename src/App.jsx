@@ -1,10 +1,14 @@
 import { useState } from 'react';
 
 export default function App() {
+  const [test, setTest] = useState("Sito Caricato");
+
   return (
-    <div style={{ padding: '20px', color: 'red', background: '#111', minHeight: '100vh' }}>
-      <h1>TEST DI AGGIORNAMENTO</h1>
-      <p>Se vedi questa scritta rossa, il sito si è aggiornato!</p>
+    <div style={{ padding: '50px', background: 'white', color: 'black', minHeight: '100vh' }}>
+      <h1>{test}</h1>
+      <button onClick={() => setTest("IL CLICK FUNZIONA!")} style={{ padding: '20px', fontSize: '20px' }}>
+        Clicca qui per testare
+      </button>
     </div>
   );
 }
