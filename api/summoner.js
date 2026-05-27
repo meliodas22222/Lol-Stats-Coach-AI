@@ -13,18 +13,19 @@ export default async function handler(req, res) {
     });
     const summoner = await sumRes.json();
 
-    const matchRes = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${account.puuid}/ids?start=0&count=1`, {
+    // Recupero Rank (Solo/Duo e Flex)
+    const rankRes = await fetch(`https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/${summoner.id}`, {
+      headers: { "X-Riot-Token": apiKey }
+    });
+    const rankData = await rankRes.json();
+
+    // Recupero ultime partite
+    const matchRes = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${account.puuid}/ids?start=0&count=5`, {
       headers: { "X-Riot-Token": apiKey }
     });
     const matchIds = await matchRes.json();
-    
-    // Recuperiamo i dettagli solo dell'ultima partita
-    const detailRes = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/${matchIds[0]}`, {
-      headers: { "X-Riot-Token": apiKey }
-    });
-    const matchDetail = await detailRes.json();
 
-    return res.status(200).json({ account, summoner, matchDetail });
+    return res.status(200).json({ account, summoner, rankData, matchIds });
   } catch (error) {
     return res.status(500).json({ error: "Errore nel recupero dati" });
   }
