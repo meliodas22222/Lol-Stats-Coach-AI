@@ -11,32 +11,25 @@ function App() {
     setData(result);
   };
 
+  // Troviamo il partecipante che sei tu
+  const myData = data?.matchDetail?.info?.participants?.find(p => p.puuid === data.account.puuid);
+
   return (
     <div style={{ padding: '20px', color: 'white', background: '#111', minHeight: '100vh', fontFamily: 'sans-serif' }}>
       <h1>LoL Stats Coach AI</h1>
       <input value={name} onChange={e => setName(e.target.value)} placeholder="Nome" style={{ color: 'black' }} />
       <input value={tag} onChange={e => setTag(e.target.value)} placeholder="Tag" style={{ color: 'black' }} />
-      <button onClick={handleSearch} style={{ marginLeft: '10px' }}>Cerca</button>
+      <button onClick={handleSearch}>Cerca</button>
 
-      {data && (
-        <div style={{ marginTop: '20px' }}>
+      {myData && (
+        <div style={{ marginTop: '20px', padding: '20px', background: '#222', borderRadius: '10px' }}>
           <h2>{data.account.gameName}</h2>
-          <p>Livello: {data.summoner.summonerLevel}</p>
+          <p>Ultimo Campione: {myData.championName}</p>
+          <p>KDA: {myData.kills}/{myData.deaths}/{myData.assists}</p>
           
-          <div style={{ marginTop: '20px', background: '#222', padding: '15px', borderRadius: '10px' }}>
-            <h3>Status Rank:</h3>
-            {data.rankData.status ? (
-              <p style={{ color: '#ff6b6b' }}>Dati Rank non accessibili (Chiave API limitata)</p>
-            ) : (
-              <p>Rank caricato correttamente</p>
-            )}
-          </div>
-
-          <div style={{ marginTop: '20px' }}>
-            <h3>Ultime 5 partite (IDs):</h3>
-            <ul>
-              {data.matchIds.map(id => <li key={id}>{id}</li>)}
-            </ul>
+          <div style={{ marginTop: '20px', borderTop: '1px solid #444', paddingTop: '10px' }}>
+            <h3>Dettagli Rank dall'ultima partita:</h3>
+            <p>Tier (Range): {myData.challenges?.rank ? myData.challenges.rank : "Dato non disponibile in questo match"}</p>
           </div>
         </div>
       )}
