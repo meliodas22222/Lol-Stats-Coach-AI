@@ -6,9 +6,27 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
+    if (!summonerName) return;
     setLoading(true);
-    setTimeout(() => setLoading(false), 2000); // Simulazione ricerca
+    
+    try {
+      // Esegue la chiamata all'API di Riot usando la variabile d'ambiente sicura
+      const response = await fetch(`https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/${summonerName}?api_key=${import.meta.env.VITE_RIOT_API_KEY}`);
+      
+      if (!response.ok) {
+        throw new Error("Errore nella chiamata API. Verifica la chiave.");
+      }
+      
+      const data = await response.json();
+      console.log("Dati ricevuti:", data); 
+      alert("Evocatore trovato! Controlla la console (F12) per i dettagli.");
+    } catch (error) {
+      console.error("Errore:", error);
+      alert("Errore: impossibile recuperare i dati. Assicurati che la chiave API sia valida e non scaduta.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCoach = () => {
