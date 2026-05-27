@@ -11,13 +11,6 @@ function App() {
     setData(result);
   };
 
-  const getSoloDuo = () => {
-    if (!data?.rankData) return null;
-    return data.rankData.find(entry => entry.queueType === "RANKED_SOLO_5x5");
-  };
-
-  const soloDuo = getSoloDuo();
-
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
       <div className="max-w-md mx-auto bg-gray-800 p-6 rounded-xl border border-gray-700">
@@ -27,15 +20,18 @@ function App() {
 
         {data && (
           <div className="mt-6">
-            <h2 className="text-2xl font-bold">{data.gameName}</h2>
-            <p className="text-gray-400">Livello: {data.summonerLevel}</p>
-            
-            <div className="mt-4 p-4 bg-gray-900 rounded border border-gray-600">
-              <h3 className="font-bold text-blue-400">Ranked Solo/Duo</h3>
-              {soloDuo ? (
-                <p className="text-xl font-bold">{soloDuo.tier} {soloDuo.rank} - {soloDuo.leaguePoints} LP</p>
-              ) : <p className="text-gray-500">Nessuna partita in Solo/Duo trovata</p>}
-            </div>
+            {data.error ? (
+              <p className="text-red-500 font-bold">Errore: {data.error}</p>
+            ) : (
+              <div>
+                <h2 className="text-2xl font-bold">{data.gameName}</h2>
+                <p className="text-gray-400">Livello: {data.summonerLevel}</p>
+                <div className="mt-4 p-3 bg-gray-700 rounded">
+                  <h3 className="font-bold">Rank:</h3>
+                  <pre className="text-xs">{JSON.stringify(data.rankData, null, 2)}</pre>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
