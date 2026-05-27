@@ -13,9 +13,14 @@ export default async function handler(req, res) {
     });
     const summoner = await sumRes.json();
 
-    // Abbiamo rimosso la chiamata rank che dava 403
-    return res.status(200).json({ account, summoner });
+    // Chiamata per le ultime 5 partite (europe.api è il server corretto per le match history)
+    const matchRes = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${account.puuid}/ids?start=0&count=5`, {
+      headers: { "X-Riot-Token": apiKey }
+    });
+    const matchIds = await matchRes.json();
+
+    return res.status(200).json({ account, summoner, matchIds });
   } catch (error) {
-    return res.status(500).json({ error: "Errore server" });
+    return res.status(500).json({ error: "Errore nel recupero dati" });
   }
 }
