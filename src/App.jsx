@@ -11,21 +11,25 @@ function App() {
     setResult(data);
   };
 
+  const getMyData = () => {
+    if (!result?.matchDetail) return null;
+    return result.matchDetail.info.participants.find(p => p.puuid === result.account.puuid);
+  };
+
+  const myData = getMyData();
+
   return (
     <div style={{ padding: '20px', color: 'white', background: '#111', minHeight: '100vh' }}>
-      <h1>LoL Stats</h1>
-      <input value={name} onChange={e => setName(e.target.value)} placeholder="Nome" style={{ color: 'black', marginRight: '10px' }} />
-      <input value={tag} onChange={e => setTag(e.target.value)} placeholder="Tag" style={{ color: 'black', marginRight: '10px' }} />
-      <button onClick={handleSearch} style={{ padding: '5px 15px' }}>Cerca</button>
+      <h1>LoL Stats Coach AI</h1>
+      <input value={name} onChange={e => setName(e.target.value)} placeholder="Nome" style={{ color: 'black' }} />
+      <input value={tag} onChange={e => setTag(e.target.value)} placeholder="Tag" style={{ color: 'black' }} />
+      <button onClick={handleSearch}>Cerca</button>
 
-      {result && (
-        <div style={{ marginTop: '20px' }}>
-          <h2>{result.account.gameName}</h2>
-          <p>Livello: {result.summoner.summonerLevel}</p>
-          <h3>Ultime 5 partite (Match ID):</h3>
-          <ul>
-            {result.matchIds.map(id => <li key={id}>{id}</li>)}
-          </ul>
+      {myData && (
+        <div style={{ marginTop: '20px', background: myData.win ? '#1a3a1a' : '#3a1a1a', padding: '20px', borderRadius: '10px' }}>
+          <h2>Ultima partita: {myData.win ? "VITTORIA" : "SCONFITTA"}</h2>
+          <p>Campione: {myData.championName}</p>
+          <p>KDA: {myData.kills}/{myData.deaths}/{myData.assists}</p>
         </div>
       )}
     </div>
