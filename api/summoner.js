@@ -13,13 +13,18 @@ export default async function handler(req, res) {
     });
     const summoner = await sumRes.json();
 
-    // Chiamata per le ultime 5 partite (europe.api è il server corretto per le match history)
-    const matchRes = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${account.puuid}/ids?start=0&count=5`, {
+    const matchRes = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${account.puuid}/ids?start=0&count=1`, {
       headers: { "X-Riot-Token": apiKey }
     });
     const matchIds = await matchRes.json();
+    
+    // Recuperiamo i dettagli solo dell'ultima partita
+    const detailRes = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/${matchIds[0]}`, {
+      headers: { "X-Riot-Token": apiKey }
+    });
+    const matchDetail = await detailRes.json();
 
-    return res.status(200).json({ account, summoner, matchIds });
+    return res.status(200).json({ account, summoner, matchDetail });
   } catch (error) {
     return res.status(500).json({ error: "Errore nel recupero dati" });
   }
