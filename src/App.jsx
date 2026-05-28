@@ -1,53 +1,31 @@
-import { useState } from 'react';
+<div style={{ 
+  maxWidth: '800px', 
+  margin: '0 auto', 
+  fontFamily: 'Arial, sans-serif' 
+}}>
+  {/* Header moderno */}
+  <header style={{ textAlign: 'center', padding: '20px' }}>
+    <h1>LoL Coach Dashboard</h1>
+  </header>
 
-export default function App() {
-  const [name, setName] = useState('');
-  const [tag, setTag] = useState('');
-  const [data, setData] = useState(null);
-
-  // 1. Questa funzione serve per "pulire" i dati
-  const elaboraPartite = (data) => {
-    if (!data || !data.rankedMatches) return [];
-    return data.rankedMatches.map(match => {
-      const me = match.info.participants.find(p => p.puuid === data.account.puuid);
-      return {
-        campione: me.championName,
-        kda: `${me.kills}/${me.deaths}/${me.assists}`,
-        vittoria: me.win ? "Vittoria" : "Sconfitta",
-        durata: Math.floor(match.info.gameDuration / 60) + " min"
-      };
-    });
-  };
-
-  const cerca = async () => {
-    if (!name || !tag) return;
-    const res = await fetch(`/api/summoner?name=${name}&tag=${tag}`);
-    const result = await res.json();
-    setData(result);
-  };
-
-  return (
-    <div style={{ padding: '20px', background: '#fff', color: '#000' }}>
-      <h1>LoL Stats Coach AI</h1>
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-        <input value={name} onChange={e => setName(e.target.value)} placeholder="Nome" />
-        <span>#</span>
-        <input value={tag} onChange={e => setTag(e.target.value)} placeholder="Tag" style={{ width: '80px' }} />
-        <button onClick={cerca}>Cerca</button>
+  {/* Card delle statistiche */}
+  <section style={{ 
+    display: 'grid', 
+    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+    gap: '15px' 
+  }}>
+    {elaboraPartite(data).map((p, index) => (
+      <div key={index} style={{ 
+        background: p.vittoria === "Vittoria" ? '#1e3a2e' : '#3a1e1e',
+        border: '1px solid #444',
+        borderRadius: '8px',
+        padding: '15px'
+      }}>
+        <h3 style={{ margin: '0 0 10px 0' }}>{p.campione}</h3>
+        <p>KDA: {p.kda}</p>
+        <p>CS/min: {(p.cs / p.durata).toFixed(1)}</p>
+        <p>Vision Score: {p.visionScore}</p>
       </div>
-
-      {/* 2. Qui mostriamo le partite */}
-      {data && (
-        <div>
-          <h2>Statistiche recenti per: {name}#{tag}</h2>
-          {elaboraPartite(data).map((p, index) => (
-            <div key={index} style={{ border: '1px solid #444', padding: '10px', margin: '10px 0', background: '#222', color: '#fff' }}>
-              <p><strong>{p.campione}</strong> - {p.vittoria}</p>
-              <p>KDA: {p.kda} | Durata: {p.durata}</p>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+    ))}
+  </section>
+</div>
