@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
   const { name, tag } = req.query;
-  const RIOT_API_KEY = "TUA_API_KEY_QUI"; // Inserisci qui la tua chiave
+  const RIOT_API_KEY = "RGAPI-74c81461-9529-4e37-bd43-1090864f80d1"; // Inserisci qui la tua chiave
 
   if (!name || !tag) return res.status(400).json({ error: "Nome e Tag mancanti" });
 
