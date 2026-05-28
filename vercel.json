@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/summoner",
+      "destination": "/api/summoner.js"
+    }
+  ]
+}
