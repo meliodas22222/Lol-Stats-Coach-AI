@@ -12,9 +12,7 @@ export default function App() {
       const res = await fetch(`/api/summoner?name=${encodeURIComponent(name)}&tag=${encodeURIComponent(tag)}`);
       const result = await res.json();
       setData(result);
-    } catch (e) {
-      console.error("Errore:", e);
-    }
+    } catch (e) { console.error(e); }
     setLoading(false);
   };
 
@@ -29,24 +27,25 @@ export default function App() {
       <h1>LoL Stats Coach AI</h1>
       <input value={name} onChange={e => setName(e.target.value)} placeholder="Nome" />
       <input value={tag} onChange={e => setTag(e.target.value)} placeholder="Tag" />
-      <button onClick={cerca} disabled={loading}>{loading ? 'Analisi 40 partite...' : 'Cerca'}</button>
+      <button onClick={cerca} disabled={loading}>{loading ? 'Analisi in corso...' : 'Cerca'}</button>
 
       {data && (
         <div style={{ marginTop: '20px' }}>
           <div style={{ border: '1px solid #555', padding: '15px', marginBottom: '20px', borderRadius: '8px' }}>
             <h2>{data.gameName}</h2>
             <p><strong>Rank:</strong> {data.rank} {data.rank !== "Unranked" ? `- ${data.lp} LP` : ""}</p>
+            <p><strong>Stagione:</strong> {data.wins} W / {data.losses} L</p>
           </div>
           
-          <h3>Ultime 40 SoloQ:</h3>
-          {data.matches && data.matches.length > 0 ? data.matches.map((m, i) => (
+          <h3>Ultime {data.matches.length} partite in SoloQ:</h3>
+          {data.matches.map((m, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '10px', borderBottom: '1px solid #333', color: m.win ? '#4CAF50' : '#F44336' }}>
               <img src={getChampImg(m.champion)} style={{ width: '40px', height: '40px', borderRadius: '5px', marginRight: '15px' }} />
               <div>
                 <strong>{m.champion}</strong> | KDA: {m.kills}/{m.deaths}/{m.assists} | {m.win ? 'VITTORIA' : 'SCONFITTA'}
               </div>
             </div>
-          )) : <p>Nessuna partita trovata.</p>}
+          ))}
         </div>
       )}
     </div>
