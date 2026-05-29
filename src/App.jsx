@@ -8,42 +8,34 @@ export default function App() {
 
   const cerca = async () => {
     setLoading(true);
-    try {
-      const res = await fetch(`/api/summoner?name=${encodeURIComponent(name)}&tag=${encodeURIComponent(tag)}`);
-      const result = await res.json();
-      setData(result);
-    } catch (e) { console.error(e); }
+    const res = await fetch(`/api/summoner?name=${name}&tag=${tag}`);
+    const result = await res.json();
+    setData(result);
     setLoading(false);
   };
 
-  const getChampImg = (name) => {
-    const map = { "Fiddlesticks": "FiddleSticks", "Wukong": "MonkeyKing", "LeBlanc": "Leblanc", "Cho'Gath": "Chogath", "Kha'Zix": "Khazix", "Kai'Sa": "Kaisa", "Vel'Koz": "Velkoz" };
-    const cleanName = map[name] || name.replace(/[^a-zA-Z]/g, '');
-    return `https://ddragon.leagueoflegends.com/cdn/14.10.1/img/champion/${cleanName}.png`;
-  };
+  const getChampImg = (n) => `https://ddragon.leagueoflegends.com/cdn/14.10.1/img/champion/${n.replace(/[^a-zA-Z]/g, '')}.png`;
 
   return (
-    <div style={{ padding: '20px', color: 'white', backgroundColor: '#111', minHeight: '100vh', fontFamily: 'sans-serif' }}>
+    <div style={{ padding: '20px', backgroundColor: '#111', color: 'white', fontFamily: 'sans-serif' }}>
       <h1>LoL Stats Coach AI</h1>
       <input value={name} onChange={e => setName(e.target.value)} placeholder="Nome" />
       <input value={tag} onChange={e => setTag(e.target.value)} placeholder="Tag" />
-      <button onClick={cerca} disabled={loading}>{loading ? 'Analisi in corso...' : 'Cerca'}</button>
+      <button onClick={cerca} disabled={loading}>{loading ? 'Analizzando...' : 'Cerca'}</button>
 
       {data && (
         <div style={{ marginTop: '20px' }}>
-          <div style={{ border: '1px solid #555', padding: '15px', marginBottom: '20px', borderRadius: '8px' }}>
+          <div style={{ padding: '15px', border: '1px solid #444', borderRadius: '8px' }}>
             <h2>{data.gameName}</h2>
-            <p><strong>Rank:</strong> {data.rank} {data.rank !== "Unranked" ? `- ${data.lp} LP` : ""}</p>
-            <p><strong>Stagione:</strong> {data.wins} W / {data.losses} L</p>
+            <p><strong>Rank:</strong> {data.rank} - {data.lp} LP</p>
+            <p><strong>Winrate ultime 40:</strong> {Math.round((data.stats.filter(s => s.win).length / 40) * 100)}%</p>
           </div>
-          
-          <h3>Ultime {data.matches.length} partite in SoloQ:</h3>
-          {data.matches.map((m, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '10px', borderBottom: '1px solid #333', color: m.win ? '#4CAF50' : '#F44336' }}>
-              <img src={getChampImg(m.champion)} style={{ width: '40px', height: '40px', borderRadius: '5px', marginRight: '15px' }} />
-              <div>
-                <strong>{m.champion}</strong> | KDA: {m.kills}/{m.deaths}/{m.assists} | {m.win ? 'VITTORIA' : 'SCONFITTA'}
-              </div>
+
+          <h3 style={{ marginTop: '20px' }}>Storico 40 Ranked:</h3>
+          {data.stats.map((m, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '8px', borderBottom: '1px solid #222', color: m.win ? '#4CAF50' : '#F44336' }}>
+              <img src={getChampImg(m.champion)} style={{ width: '35px', height: '35px', borderRadius: '4px', marginRight: '10px' }} />
+              <strong>{m.champion}</strong> | KDA: {m.kills}/{m.deaths}/{m.assists} | {m.win ? 'VITTORIA' : 'SCONFITTA'}
             </div>
           ))}
         </div>
