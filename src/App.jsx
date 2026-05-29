@@ -13,11 +13,11 @@ export default function App() {
     setData(null);
     try {
       const res = await fetch(`/api/summoner?name=${encodeURIComponent(name)}&tag=${encodeURIComponent(tag)}`);
-      if (!res.ok) throw new Error("Giocatore non trovato");
+      if (!res.ok) throw new Error("Errore server");
       const result = await res.json();
       setData(result);
     } catch (err) {
-      setErrore("Errore nel recupero dati. Controlla il nome e il tag.");
+      setErrore("Errore nel recupero dati.");
     } finally {
       setLoading(false);
     }
@@ -35,19 +35,12 @@ export default function App() {
       {errore && <p style={{ color: 'red' }}>{errore}</p>}
       
       {data && (
-        <div>
-          <h2>Statistiche SoloQ: {data.winRate}% WinRate</h2>
-          {data.stats.length > 0 ? (
-            data.stats.map((match, index) => (
-              <div key={index} style={{ border: '1px solid #444', padding: '15px', marginBottom: '10px', borderRadius: '8px', backgroundColor: match.win ? '#1a3a1a' : '#3a1a1a' }}>
-                <p><strong>Campione:</strong> {match.champion}</p>
-                <p><strong>KDA:</strong> {match.kills}/{match.deaths}/{match.assists}</p>
-                <p><strong>Esito:</strong> {match.win ? 'Vittoria' : 'Sconfitta'}</p>
-              </div>
-            ))
-          ) : (
-            <p>Nessuna partita in SoloQ trovata negli ultimi match.</p>
-          )}
+        <div style={{ border: '1px solid #444', padding: '20px', borderRadius: '8px', maxWidth: '400px' }}>
+          <h2>{data.gameName}</h2>
+          <p><strong>Rank:</strong> {data.rank} - {data.lp} LP</p>
+          <p><strong>Vittorie:</strong> {data.wins}</p>
+          <p><strong>Sconfitte:</strong> {data.losses}</p>
+          <p><strong>Winrate Totale:</strong> {data.wins + data.losses > 0 ? Math.round((data.wins / (data.wins + data.losses)) * 100) : 0}%</p>
         </div>
       )}
     </div>
