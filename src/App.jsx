@@ -36,14 +36,18 @@ export default function App() {
       
       {data && (
         <div>
-          <h2>Statistiche recenti per {data.account.gameName}</h2>
-          {data.rankedMatches.map((match, index) => (
-            <div key={index} style={{ border: '1px solid #444', padding: '15px', marginBottom: '10px', borderRadius: '8px' }}>
-              <p><strong>Partita:</strong> {match.info.gameMode}</p>
-              <p><strong>Durata:</strong> {Math.floor(match.info.gameDuration / 60)} minuti</p>
-              <p><strong>Match ID:</strong> {match.metadata.matchId}</p>
-            </div>
-          ))}
+          <h2>Statistiche SoloQ: {data.winRate}% WinRate</h2>
+          {data.stats.length > 0 ? (
+            data.stats.map((match, index) => (
+              <div key={index} style={{ border: '1px solid #444', padding: '15px', marginBottom: '10px', borderRadius: '8px', backgroundColor: match.win ? '#1a3a1a' : '#3a1a1a' }}>
+                <p><strong>Campione:</strong> {match.champion}</p>
+                <p><strong>KDA:</strong> {match.kills}/{match.deaths}/{match.assists}</p>
+                <p><strong>Esito:</strong> {match.win ? 'Vittoria' : 'Sconfitta'}</p>
+              </div>
+            ))
+          ) : (
+            <p>Nessuna partita in SoloQ trovata negli ultimi match.</p>
+          )}
         </div>
       )}
     </div>
