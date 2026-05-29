@@ -1,30 +1,29 @@
-import { useState } from 'react';
+export default async function handler(req, res) {
+  const { name, tag } = req.query;
+  const RIOT_API_KEY = "LA_TUA_NUOVA_API_KEY"; // INSERISCI QUI LA TUA NUOVA CHIAVE
 
-export default function App() {
-  const [name, setName] = useState('');
-  const [tag, setTag] = useState('');
-  const [data, setData] = useState(null);
-  const [errore, setErrore] = useState('');
+  if (!name || !tag) return res.status(400).json({ error: "Nome e Tag mancanti" });
 
-  // ... (tieni qui le tue funzioni elaboraPartite, calcolaWinRateTotale, calcolaWinRateCampioni come le avevi prima) ...
+  try {
+    // 1. Ottieni PUUID
+    const accountRes = await fetch(`https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(name)}/${encodeURIComponent(tag)}?api_key=${RIOT_API_KEY}`);
+    const accountData = await accountRes.json();
+    if (!accountData.puuid) return res.status(404).json({ error: "Giocatore non trovato" });
 
-  const cerca = async () => {
-    if (!name || !tag) return;
-    setErrore('');
-    setData(null); // Reset dati precedenti
-    
-    try {
-      // CHIAMA IL TUO BACKEND, NON RIOT DIRECTLY
-      const res = await fetch(`/api/summoner?name=${encodeURIComponent(name)}&tag=${encodeURIComponent(tag)}`);
-      
-      if (!res.ok) throw new Error("Giocatore non trovato o errore server");
-      
-      const result = await res.json();
-      setData(result);
-    } catch (err) {
-      setErrore("Errore: impossibile recuperare i dati.");
-    }
-  };
+    // 2. Ottieni ultimi 5 match IDs
+    const idsRes = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${accountData.puuid}/ids?start=0&count=5&api_key=${RIOT_API_KEY}`);
+    const matchIds = await idsRes.json();
 
-  // ... (tieni qui il resto del return con l'interfaccia grafica) ...
+    // 3. Ottieni i dettagli di OGNI partita
+    const matchDetails = await Promise.all(
+      matchIds.map(async (id) => {
+        const detailsRes = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/${id}?api_key=${RIOT_API_KEY}`);
+        return await detailsRes.json();
+      })
+    );
+
+    return res.status(200).json({ account: accountData, rankedMatches: matchDetails });
+  } catch (error) {
+    return res.status(500).json({ error: "Errore interno server" });
+  }
 }
