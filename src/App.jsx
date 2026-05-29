@@ -25,15 +25,18 @@ export default function App() {
         <div style={{ marginTop: '20px' }}>
           <div style={{ border: '1px solid #555', padding: '15px', marginBottom: '20px', borderRadius: '8px' }}>
             <h2>{data.gameName}</h2>
-            <p><strong>Rank:</strong> {data.rank} ({data.lp} LP)</p>
-            <p><strong>Stagione:</strong> {data.wins} W / {data.losses} L</p>
+            <p><strong>Rank:</strong> {data.rank} {data.rank !== "Unranked" ? `- ${data.lp} LP` : ""}</p>
+            {data.wins + data.losses > 0 && (
+              <p><strong>Stagione:</strong> {data.wins} W / {data.losses} L</p>
+            )}
           </div>
+          
           <h3>Ultime SoloQ:</h3>
-          {data.matches.map((m, i) => (
+          {data.matches && data.matches.length > 0 ? data.matches.map((m, i) => (
             <div key={i} style={{ padding: '10px', borderBottom: '1px solid #333', color: m.win ? '#4CAF50' : '#F44336' }}>
               {m.champion} | KDA: {m.kills}/{m.deaths}/{m.assists} | {m.win ? 'VITTORIA' : 'SCONFITTA'}
             </div>
-          ))}
+          )) : <p>Nessuna partita in SoloQ trovata.</p>}
         </div>
       )}
     </div>
