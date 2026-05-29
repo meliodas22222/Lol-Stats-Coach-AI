@@ -5,19 +5,18 @@ export default async function handler(req, res) {
   if (!name || !tag) return res.status(400).json({ error: "Dati mancanti" });
 
   try {
-    // 1. Otteniamo il PUUID (fondamentale)
     const accRes = await fetch(`https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(name)}/${encodeURIComponent(tag)}?api_key=${RIOT_API_KEY}`);
     const accData = await accRes.json();
     if (!accData.puuid) throw new Error("Account non trovato");
 
-    // 2. Recuperiamo il Rank direttamente con il PUUID tramite l'endpoint dedicato
     const leagueRes = await fetch(`https://euw1.api.riotgames.com/lol/league/v4/entries/by-puuid/${accData.puuid}?api_key=${RIOT_API_KEY}`);
     const leagueData = await leagueRes.json();
     const soloQ = (Array.isArray(leagueData) ? leagueData : []).find(e => e.queueType === "RANKED_SOLO_5x5") || {};
 
-    // 3. Recupero partite
-    const idsRes = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${accData.puuid}/ids?start=0&count=10&api_key=${RIOT_API_KEY}`);
+    // Modificato count da 10 a 40
+    const idsRes = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${accData.puuid}/ids?start=0&count=40&api_key=${RIOT_API_KEY}`);
     const matchIds = await idsRes.json();
+
     const matchDetails = await Promise.all((Array.isArray(matchIds) ? matchIds : []).map(async (id) => {
       const d = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/${id}?api_key=${RIOT_API_KEY}`);
       return await d.json();
