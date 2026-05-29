@@ -8,15 +8,27 @@ export default function App() {
 
   const cerca = async () => {
     setLoading(true);
-    const res = await fetch(`/api/summoner?name=${name}&tag=${tag}`);
-    const result = await res.json();
-    setData(result);
+    try {
+      const res = await fetch(`/api/summoner?name=${encodeURIComponent(name)}&tag=${encodeURIComponent(tag)}`);
+      const result = await res.json();
+      setData(result);
+    } catch (e) {
+      console.error("Errore fetch:", e);
+    }
     setLoading(false);
   };
 
-  // Funzione per pulire il nome del campione per l'URL dell'immagine
   const getChampImg = (name) => {
-    const cleanName = name.replace(/[^a-zA-Z]/g, '');
+    const map = {
+      "Fiddlesticks": "FiddleSticks",
+      "Wukong": "MonkeyKing",
+      "LeBlanc": "Leblanc",
+      "Cho'Gath": "Chogath",
+      "Kha'Zix": "Khazix",
+      "Kai'Sa": "Kaisa",
+      "Vel'Koz": "Velkoz"
+    };
+    const cleanName = map[name] || name.replace(/[^a-zA-Z]/g, '');
     return `https://ddragon.leagueoflegends.com/cdn/14.10.1/img/champion/${cleanName}.png`;
   };
 
@@ -31,20 +43,27 @@ export default function App() {
         <div style={{ marginTop: '20px' }}>
           <div style={{ border: '1px solid #555', padding: '15px', marginBottom: '20px', borderRadius: '8px' }}>
             <h2>{data.gameName}</h2>
-            <p><strong>Rank:</strong> {data.rank} ({data.lp} LP)</p>
-            <p><strong>Winrate:</strong> {data.wins + data.losses > 0 ? Math.round((data.wins / (data.wins + data.losses)) * 100) : 0}%</p>
+            <p><strong>Rank:</strong> {data.rank} {data.rank !== "Unranked" ? `- ${data.lp} LP` : ""}</p>
+            {data.wins + data.losses > 0 && (
+              <p><strong>Stagione:</strong> {data.wins} W / {data.losses} L</p>
+            )}
           </div>
           
           <h3>Ultime SoloQ:</h3>
-          {data.matches && data.matches.map((m, i) => (
+          {data.matches && data.matches.length > 0 ? data.matches.map((m, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '10px', borderBottom: '1px solid #333', color: m.win ? '#4CAF50' : '#F44336' }}>
-              <img src={getChampImg(m.champion)} alt={m.champion} style={{ width: '40px', height: '40px', borderRadius: '5px', marginRight: '15px' }} />
+              <img 
+                src={getChampImg(m.champion)} 
+                alt={m.champion} 
+                style={{ width: '40px', height: '40px', borderRadius: '5px', marginRight: '15px', backgroundColor: '#333' }} 
+                onError={(e) => { e.target.src = 'https://ddragon.leagueoflegends.com/cdn/14.10.1/img/champion/NotFound.png'; }}
+              />
               <div>
                 <strong>{m.champion}</strong><br/>
                 KDA: {m.kills}/{m.deaths}/{m.assists} | {m.win ? 'VITTORIA' : 'SCONFITTA'}
               </div>
             </div>
-          ))}
+          )) : <p>Nessuna partita in SoloQ trovata.</p>}
         </div>
       )}
     </div>
