@@ -13,8 +13,8 @@ export default async function handler(req, res) {
     const leagueData = await leagueRes.json();
     const soloQ = (Array.isArray(leagueData) ? leagueData : []).find(e => e.queueType === "RANKED_SOLO_5x5") || {};
 
-    // Modificato count da 10 a 40
-    const idsRes = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${accData.puuid}/ids?start=0&count=40&api_key=${RIOT_API_KEY}`);
+    // Recuperiamo 100 match per essere sicuri di trovarne 40 di SoloQ
+    const idsRes = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${accData.puuid}/ids?start=0&count=100&api_key=${RIOT_API_KEY}`);
     const matchIds = await idsRes.json();
 
     const matchDetails = await Promise.all((Array.isArray(matchIds) ? matchIds : []).map(async (id) => {
@@ -22,10 +22,14 @@ export default async function handler(req, res) {
       return await d.json();
     }));
 
-    const stats = matchDetails.filter(m => m.info && m.info.queueId === 420).map(match => {
-      const p = match.info.participants.find(part => part.puuid === accData.puuid);
-      return { champion: p.championName, kills: p.kills, deaths: p.deaths, assists: p.assists, win: p.win };
-    });
+    // Filtriamo solo SoloQ (420) e prendiamo le prime 40
+    const stats = matchDetails
+      .filter(m => m.info && m.info.queueId === 420)
+      .slice(0, 40)
+      .map(match => {
+        const p = match.info.participants.find(part => part.puuid === accData.puuid);
+        return { champion: p.championName, kills: p.kills, deaths: p.deaths, assists: p.assists, win: p.win };
+      });
 
     return res.status(200).json({ 
       gameName: accData.gameName,
