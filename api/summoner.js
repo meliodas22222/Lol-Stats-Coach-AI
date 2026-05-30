@@ -6,14 +6,12 @@ export default async function handler(req, res) {
     const accRes = await fetch(`https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(name)}/${encodeURIComponent(tag)}?api_key=${RIOT_API_KEY}`);
     const accData = await accRes.json();
     
-    // 1. Dati Rank (usando il PUUID per essere certi del profilo)
-    const sumRes = await fetch(`https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${accData.puuid}?api_key=${RIOT_API_KEY}`);
-    const sumData = await sumRes.json();
-    const leagueRes = await fetch(`https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/${sumData.id}?api_key=${RIOT_API_KEY}`);
+    // 1. Recupero Rank tramite PUUID (più affidabile per Master/Challenger)
+    const leagueRes = await fetch(`https://euw1.api.riotgames.com/lol/league/v4/entries/by-puuid/${accData.puuid}?api_key=${RIOT_API_KEY}`);
     const leagueData = await leagueRes.json();
     const soloQ = (Array.isArray(leagueData) ? leagueData : []).find(e => e.queueType === "RANKED_SOLO_5x5") || {};
 
-    // 2. Recupero 40 match
+    // 2. Recupero 40 match (SoloQ 420)
     const idsRes = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${accData.puuid}/ids?queue=420&start=0&count=40&api_key=${RIOT_API_KEY}`);
     const matchIds = await idsRes.json();
     
@@ -36,6 +34,6 @@ export default async function handler(req, res) {
       stats: stats
     });
   } catch (error) {
-    res.status(500).json({ error: "Errore nel recupero dati" });
+    res.status(500).json({ error: error.message });
   }
 }
