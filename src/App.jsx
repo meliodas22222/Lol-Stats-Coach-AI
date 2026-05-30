@@ -10,12 +10,6 @@ export default function App() {
     setData(await res.json());
   };
 
-  const getChampWinrate = (champ, stats) => {
-    const champMatches = stats.filter(s => s.champion === champ);
-    const wins = champMatches.filter(s => s.win).length;
-    return Math.round((wins / champMatches.length) * 100);
-  };
-
   return (
     <div style={{ padding: '20px', backgroundColor: '#111', color: 'white', maxWidth: '800px', margin: 'auto' }}>
       <h1>LoL Stats Coach AI</h1>
@@ -25,18 +19,19 @@ export default function App() {
 
       {data && (
         <div style={{ marginTop: '20px' }}>
-          <h2>📊 {data.gameName} | {data.rank}</h2>
+          <h2>📊 {data.gameName} | {data.rank} ({data.lp} LP)</h2>
           <p>Winrate Totale: {((data.wins/(data.wins+data.losses))*100).toFixed(0)}%</p>
 
-          <h3>🏆 Storico Recente</h3>
+          <h3>🏆 Storico 20 Ranked</h3>
           {data.stats.map((m, i) => (
             <details key={i} style={{ background: '#222', margin: '5px 0', padding: '10px', borderLeft: `5px solid ${m.win ? 'green' : 'red'}` }}>
               <summary style={{ cursor: 'pointer' }}>
-                {m.champion} | {m.win ? 'VITTORIA' : 'SCONFITTA'} | WR Campione: {getChampWinrate(m.champion, data.stats)}%
+                <img src={`https://ddragon.leagueoflegends.com/cdn/14.10.1/img/champion/${m.champion.replace(/[^a-zA-Z]/g, '')}.png`} style={{ width: '25px', marginRight: '10px', verticalAlign: 'middle' }} />
+                {m.champion} | {m.win ? 'VITTORIA' : 'SCONFITTA'}
               </summary>
               <div style={{ marginTop: '10px', fontSize: '0.9em' }}>
                 <p>KDA: {m.kills}/{m.deaths}/{m.assists} | CS/m: {m.csPerMin} | Vision: {m.visionScore}</p>
-                <hr />
+                <hr style={{ borderColor: '#444' }} />
                 <strong>Altri giocatori:</strong>
                 {m.others.map((p, idx) => <div key={idx}>{p.name} ({p.champion}): {p.kda}</div>)}
               </div>
