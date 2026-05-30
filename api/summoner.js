@@ -3,32 +3,29 @@ export default async function handler(req, res) {
   const RIOT_API_KEY = "RGAPI-f7e8628a-9a64-4c87-8e8c-24c8cba88ae8";
 
   try {
-    const accRes = await fetch(`https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(name)}/${encodeURIComponent(tag)}?api_key=${RIOT_API_KEY}`);
-    const accData = await accRes.json();
-    const sumRes = await fetch(`https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${accData.puuid}?api_key=${RIOT_API_KEY}`);
-    const sumData = await sumRes.json();
+    const acc = await (await fetch(`https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(name)}/${encodeURIComponent(tag)}?api_key=${RIOT_API_KEY}`)).json();
+    const sum = await (await fetch(`https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${acc.puuid}?api_key=${RIOT_API_KEY}`)).json();
+    const league = await (await fetch(`https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/${sum.id}?api_key=${RIOT_API_KEY}`)).json();
     
-    const leagueRes = await fetch(`https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/${sumData.id}?api_key=${RIOT_API_KEY}`);
-    const leagueData = await leagueRes.json();
-    // FORZIAMO ARRAY PER EVITARE L'ERRORE
-    const lArray = Array.isArray(leagueData) ? leagueData : [];
-    const soloQ = lArray.find(e => e.queueType === "RANKED_SOLO_5x5") || { wins: 0, losses: 0, tier: "Unranked", rank: "", leaguePoints: 0 };
-
-    const idsRes = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${accData.puuid}/ids?queue=420&start=0&count=20&api_key=${RIOT_API_KEY}`);
-    const matchIds = await idsRes.json();
+    const soloQ = (Array.isArray(league) ? league : []).find(e => e.queueType === "RANKED_SOLO_5x5") || { tier: "Unranked", rank: "", leaguePoints: 0, wins: 0, losses: 0 };
+    const matchIds = await (await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${acc.puuid}/ids?queue=420&start=0&count=20&api_key=${RIOT_API_KEY}`)).json();
     
-    const stats = await Promise.all((Array.isArray(matchIds) ? matchIds : []).map(async (id) => {
-      const d = await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/${id}?api_key=${RIOT_API_KEY}`);
-      const m = await d.json();
+    const stats = await Promise.all((matchIds || []).map(async (id) => {
+      const m = await (await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/${id}?api_key=${RIOT_API_KEY}`)).json();
       if (!m.info) return null;
-      const p = m.info.participants.find(part => part.puuid === accData.puuid);
-      return { 
+      const p = m.info.participants.find(part => part.puuid === acc.puuid);
+      const team1 = m.info.participants.filter(part => part.teamId === 100);
+      const team2 = m.info.participants.filter(part => part.teamId === 200);
+      
+      return {
         champion: p.championName, win: p.win, kills: p.kills, deaths: p.deaths, assists: p.assists,
-        csPerMin: ((p.totalMinionsKilled + p.neutralMinionsKilled) / (m.info.gameDuration / 60 || 1)).toFixed(1),
-        visionScore: p.visionScore,
-        others: m.info.participants.map(part => ({ name: part.riotIdGameName, champion: part.championName, kda: `${part.kills}/${part.deaths}/${part.assists}` }))
+        duration: Math.floor(m.info.gameDuration / 60),
+        teamKills: p.teamId === 100 ? team1.reduce((a, b) => a + b.kills, 0) : team2.reduce((a, b) => a + b.kills, 0),
+        enemyKills: p.teamId === 100 ? team2.reduce((a, b) => a + b.kills, 0) : team1.reduce((a, b) => a + b.kills, 0),
+        players: m.info.participants.map(part => ({ name: part.riotIdGameName, champ: part.championName, kda: `${part.kills}/${part.deaths}/${part.assists}`, team: part.teamId }))
       };
     }));
-    res.status(200).json({ gameName: accData.gameName, rank: `${soloQ.tier} ${soloQ.rank}`, lp: soloQ.leaguePoints, wins: soloQ.wins, losses: soloQ.losses, stats: stats.filter(s => s) });
-  } catch (error) { res.status(500).json({ error: error.message }); }
+
+    res.status(200).json({ gameName: acc.gameName, rank: soloQ.tier, division: soloQ.rank, lp: soloQ.leaguePoints, wins: soloQ.wins, losses: soloQ.losses, stats });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 }
