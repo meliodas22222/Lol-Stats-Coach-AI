@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
   const { name, tag } = req.query;
-  const RIOT_API_KEY = "RGAPI-f7e8628a-9a64-4c87-8e8c-24c8cba88ae8";
+  const RIOT_API_KEY = "INSERISCI_QUI_LA_TUA_API_KEY";
 
   try {
     const accRes = await fetch(`https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(name)}/${encodeURIComponent(tag)}?api_key=${RIOT_API_KEY}`);
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
         csPerMin: ((p.totalMinionsKilled + p.neutralMinionsKilled) / minutes).toFixed(1),
         visionScore: p.visionScore,
         others: m.info.participants.map(part => ({
-          name: part.riotIdGameName || "N/A",
+          name: part.riotIdGameName,
           champion: part.championName,
           kda: `${part.kills}/${part.deaths}/${part.assists}`
         }))
