@@ -5,44 +5,43 @@ export default async function handler(req, res) {
   try {
     const acc = await (await fetch(`https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(name)}/${encodeURIComponent(tag)}?api_key=${RIOT_API_KEY}`)).json();
     const sum = await (await fetch(`https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${acc.puuid}?api_key=${RIOT_API_KEY}`)).json();
+    const league = await (await fetch(`https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/${sum.id}?api_key=${RIOT_API_KEY}`)).json();
     
-    // Recupero il rank
-    const leagueData = await (await fetch(`https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/${sum.id}?api_key=${RIOT_API_KEY}`)).json();
-    
-    // Log per debug su Vercel (controlla i logs se ancora non vedi il rank)
-    console.log("League Data ricevuti da Riot:", leagueData);
-
-    // Cerchiamo il rank: prioritizziamo SoloQ, altrimenti prendiamo il primo dato disponibile
-    let rankInfo = Array.isArray(leagueData) ? leagueData.find(e => e.queueType === "RANKED_SOLO_5x5") : null;
-    if (!rankInfo && Array.isArray(leagueData) && leagueData.length > 0) rankInfo = leagueData[0];
+    // Recupero Rank (SoloQ prioritario)
+    let rankInfo = Array.isArray(league) ? league.find(e => e.queueType === "RANKED_SOLO_5x5") : null;
+    if (!rankInfo && Array.isArray(league) && league.length > 0) rankInfo = league[0];
 
     const matchIds = await (await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${acc.puuid}/ids?queue=420&start=0&count=15&api_key=${RIOT_API_KEY}`)).json();
     
-    const matches = await Promise.all(matchIds.map(async (id) => {
-      const m = await (await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/${id}?api_key=${RIOT_API_KEY}`)).json();
-      if (!m.info) return null;
-      const p = m.info.participants.find(part => part.puuid === acc.puuid);
-      
-      return {
-        champion: p.championName,
-        win: p.win,
-        kills: p.kills, deaths: p.deaths, assists: p.assists,
-        damage: p.totalDamageDealtToChampions,
-        duration: Math.floor(m.info.gameDuration / 60),
-        allPlayers: m.info.participants.map(part => ({
-          name: part.riotIdGameName,
-          champ: part.championName,
-          kda: `${part.kills}/${part.deaths}/${part.assists}`,
-          team: part.teamId
-        }))
-      };
+    const matches = await Promise.all((matchIds || []).map(async (id) => {
+      try {
+        const m = await (await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/${id}?api_key=${RIOT_API_KEY}`)).json();
+        if (!m.info || !m.info.participants) return null;
+        
+        const p = m.info.participants.find(part => part.puuid === acc.puuid);
+        if (!p) return null; // Salta se i dati del partecipante mancano
+        
+        return {
+          champion: p.championName,
+          win: p.win,
+          kills: p.kills, deaths: p.deaths, assists: p.assists,
+          damage: p.totalDamageDealtToChampions,
+          duration: Math.floor(m.info.gameDuration / 60),
+          allPlayers: m.info.participants.map(part => ({
+            name: part.riotIdGameName,
+            champ: part.championName,
+            kda: `${part.kills}/${part.deaths}/${part.assists}`,
+            team: part.teamId
+          }))
+        };
+      } catch { return null; }
     }));
 
     res.status(200).json({ 
       gameName: acc.gameName, 
       rank: rankInfo ? rankInfo.tier : "Unranked", 
       division: rankInfo ? rankInfo.rank : "", 
-      matches 
+      matches: matches.filter(m => m !== null) // Rimuove eventuali null
     });
   } catch (e) { res.status(500).json({ error: e.message }); }
 }
