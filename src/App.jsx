@@ -1,40 +1,75 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 export default function App() {
   const [name, setName] = useState('');
   const [tag, setTag] = useState('');
   const [data, setData] = useState(null);
+  const [showGame, setShowGame] = useState(false);
 
   const cerca = async () => {
-    const res = await fetch(`/api/summoner?name=${name}&tag=${tag}`);
-    setData(await res.json());
+    try {
+      const res = await fetch(`/api/summoner?name=${name}&tag=${tag}`);
+      const json = await res.json();
+      if (json.error) alert(json.error);
+      else setData(json);
+    } catch (err) { console.error(err); }
   };
 
+  if (showGame) return <Game onClose={() => setShowGame(false)} />;
+
   return (
-    <div style={{ padding: '20px', backgroundColor: '#050505', color: '#eee', fontFamily: 'sans-serif' }}>
+    <div style={{ padding: '20px', backgroundColor: '#000', color: '#fff', minHeight: '100vh' }}>
       <h1>LoL Stats Coach AI</h1>
       <input value={name} onChange={e => setName(e.target.value)} placeholder="Nome" />
       <input value={tag} onChange={e => setTag(e.target.value)} placeholder="Tag" />
       <button onClick={cerca}>Cerca</button>
+      <button onClick={() => setShowGame(true)} style={{ marginLeft: '10px', background: 'gold' }}>🎮 Game</button>
 
-      {data && (
-        <>
-          <h2>{data.gameName} | {data.rank} {data.division} ({data.lp} LP)</h2>
-          <p>Winrate Totale: {((data.wins/(data.wins+data.losses))*100).toFixed(0)}%</p>
-          {data.stats.map((m, i) => (
-            <details key={i} style={{ margin: '10px 0', padding: '10px', borderLeft: `5px solid ${m.win ? '#2e7d32' : '#c62828'}`, background: '#111' }}>
-              <summary style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                <img src={`https://ddragon.leagueoflegends.com/cdn/14.10.1/img/champion/${m.champion === 'Fiddlesticks' ? 'Fiddlesticks' : m.champion.charAt(0).toUpperCase() + m.champion.slice(1)}.png`} width="30" style={{ marginRight: '10px' }} />
-                {m.champion} | {m.win ? 'VITTORIA' : 'SCONFITTA'} | {m.duration} min | Team Kills: {m.teamKills}-{m.enemyKills}
-              </summary>
-              <div style={{ marginTop: '10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                <div><strong>Alleati:</strong> {m.players.filter(p => p.team === (m.players.find(x => x.name === data.gameName)?.team)).map((p, x) => <div key={x}>{p.champ}: {p.kda}</div>)}</div>
-                <div><strong>Nemici:</strong> {m.players.filter(p => p.team !== (m.players.find(x => x.name === data.gameName)?.team)).map((p, x) => <div key={x}>{p.champ}: {p.kda}</div>)}</div>
+      {data && data.stats && (
+        <div style={{ marginTop: '20px' }}>
+          <h2>{data.gameName} | {data.rank} {data.division}</h2>
+          {data.stats.map((m, i) => {
+            if (!m) return null; // Protezione extra
+            return (
+              <div key={i} style={{ background: '#1a1a1a', padding: '10px', margin: '5px 0', borderLeft: `5px solid ${m.win ? 'green' : 'red'}` }}>
+                <strong>{m.champion}</strong> | {m.win ? 'WIN' : 'LOSS'}
+                <p>KDA: {m.kills}/{m.deaths}/{m.assists} | Vision: {m.visionScore}</p>
               </div>
-            </details>
-          ))}
-        </>
+            );
+          })}
+        </div>
       )}
     </div>
   );
+}
+
+function Game({ onClose }) {
+  const canvasRef = useRef(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    let p = { x: 400, y: 300, tx: 400, ty: 300 };
+    let bullets = [];
+    
+    const handleMouse = (e) => { 
+        const rect = canvas.getBoundingClientRect();
+        p.tx = e.clientX - rect.left; 
+        p.ty = e.clientY - rect.top; 
+    };
+    window.addEventListener('mousemove', handleMouse);
+
+    const loop = setInterval(() => {
+      ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fillRect(0, 0, 800, 600);
+      p.x += (p.tx - p.x) * 0.1; p.y += (p.ty - p.y) * 0.1;
+      ctx.fillStyle = 'cyan'; ctx.beginPath(); ctx.arc(p.x, p.y, 10, 0, Math.PI*2); ctx.fill();
+      
+      if(Math.random() < 0.05) bullets.push({x: Math.random()*800, y: 0, vx: (p.x - 400)/50, vy: 5});
+      bullets.forEach((b, i) => {
+        b.x += b.vx; b.y += b.vy;
+        ctx.fillStyle = 'red'; ctx.fillRect(b.x, b.y, 10, 10);
+      });
+    }, 30);
+    return () => { clearInterval(loop); window.removeEventListener('mousemove', handleMouse); };
+  }, []);
+  return <div style={{position:'fixed', top:0, left:0, background:'#000', zIndex: 999}}><button onClick={onClose}>EXIT</button><canvas ref={canvasRef} width={800} height={600}/></div>;
 }
