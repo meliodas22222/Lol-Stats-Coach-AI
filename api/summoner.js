@@ -1,24 +1,19 @@
+import fetch from 'node-fetch';
+
 export default async function handler(req, res) {
   const { name, tag } = req.query;
   const RIOT_API_KEY = "RGAPI-aa2300c6-b765-4346-a8fd-fc33bc816efe";
 
+  if (!name || !tag) return res.status(400).json({ error: "Nome e Tag mancanti" });
+
   try {
     const acc = await (await fetch(`https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(name)}/${encodeURIComponent(tag)}?api_key=${RIOT_API_KEY}`)).json();
+    if (!acc.puuid) throw new Error("Account non trovato");
+
     const sum = await (await fetch(`https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${acc.puuid}?api_key=${RIOT_API_KEY}`)).json();
     
-    // TENTATIVO 1: Endpoint standard
-    let league = await (await fetch(`https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/${sum.id}?api_key=${RIOT_API_KEY}`)).json();
-    
-    // TENTATIVO 2: Se è vuoto, proviamo l'endpoint "EXP" (più adatto per Master+)
-    if (!league || league.length === 0) {
-        league = await (await fetch(`https://euw1.api.riotgames.com/lol/league-exp/v4/entries/RANKED_SOLO_5x5/CHALLENGER/I?page=1&api_key=${RIOT_API_KEY}`)).json();
-        // Nota: questo endpoint è più complesso, stiamo solo cercando di vedere se il dato arriva
-    }
-
-    let rankInfo = Array.isArray(league) ? league.find(e => e.summonerId === sum.id) : null;
-    
-    // Fallback finale se non troviamo nulla
-    const rankDisplay = rankInfo ? `${rankInfo.tier} ${rankInfo.rank}` : "Master+ (Dati protetti)";
+    const league = await (await fetch(`https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/${sum.id}?api_key=${RIOT_API_KEY}`)).json();
+    const rankInfo = Array.isArray(league) ? league.find(e => e.queueType === "RANKED_SOLO_5x5") : null;
 
     const matchIds = await (await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${acc.puuid}/ids?queue=420&start=0&count=15&api_key=${RIOT_API_KEY}`)).json();
     
@@ -50,7 +45,10 @@ export default async function handler(req, res) {
       gameName: acc.gameName, 
       rank: rankInfo ? rankInfo.tier : "Master+", 
       division: rankInfo ? rankInfo.rank : "", 
+      lp: rankInfo ? `${rankInfo.leaguePoints} LP` : "",
       matches: matches.filter(m => m !== null) 
     });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { 
+    res.status(500).json({ error: e.message }); 
+  }
 }
