@@ -7,7 +7,8 @@ export default function App() {
 
   const cerca = async () => {
     const res = await fetch(`/api/summoner?name=${name}&tag=${tag}`);
-    setData(await res.json());
+    const json = await res.json();
+    setData(json);
   };
 
   return (
@@ -19,21 +20,24 @@ export default function App() {
 
       {data?.matches && (
         <div style={{ marginTop: '20px' }}>
-          <h2>{data.gameName} | {data.rank} {data.division}</h2>
-          {data.matches.map((m, i) => (
-            <details key={i} style={{ background: '#1a1a1a', margin: '10px 0', padding: '10px', borderLeft: `6px solid ${m.win ? 'green' : 'red'}` }}>
-              <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>
-                {m.champion} | {m.win ? 'WIN' : 'LOSS'} | {m.kills}/{m.deaths}/{m.assists} | Danno: {m.damage} | Durata: {m.duration} min
-              </summary>
-              <div style={{ marginTop: '10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                {m.allPlayers.map((p, idx) => (
-                  <div key={idx} style={{ fontSize: '0.85em', color: p.team === 100 ? '#8888ff' : '#ff8888' }}>
-                    {p.champ} ({p.name}) - KDA: {p.kda}
-                  </div>
-                ))}
-              </div>
-            </details>
-          ))}
+          <h2>{data.gameName} | <span style={{ color: '#d4af37' }}>{data.rank} {data.division}</span></h2>
+          {data.matches.map((m, i) => {
+            if (!m) return null; // Controllo di sicurezza
+            return (
+              <details key={i} style={{ background: '#1a1a1a', margin: '10px 0', padding: '10px', borderLeft: `6px solid ${m.win ? 'green' : 'red'}` }}>
+                <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>
+                  {m.champion} | {m.win ? 'WIN' : 'LOSS'} | {m.kills}/{m.deaths}/{m.assists} | Danno: {m.damage} | {m.duration} min
+                </summary>
+                <div style={{ marginTop: '10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  {m.allPlayers?.map((p, idx) => (
+                    <div key={idx} style={{ fontSize: '0.85em', color: p.team === 100 ? '#8888ff' : '#ff8888' }}>
+                      {p.champ} ({p.name}) - KDA: {p.kda}
+                    </div>
+                  ))}
+                </div>
+              </details>
+            );
+          })}
         </div>
       )}
     </div>
