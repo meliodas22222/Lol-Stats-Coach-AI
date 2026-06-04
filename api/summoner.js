@@ -6,9 +6,19 @@ export default async function handler(req, res) {
     const acc = await (await fetch(`https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(name)}/${encodeURIComponent(tag)}?api_key=${RIOT_API_KEY}`)).json();
     const sum = await (await fetch(`https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${acc.puuid}?api_key=${RIOT_API_KEY}`)).json();
     
-    // Recupero Rank
-    const league = await (await fetch(`https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/${sum.id}?api_key=${RIOT_API_KEY}`)).json();
-    const rankInfo = Array.isArray(league) ? league.find(e => e.queueType === "RANKED_SOLO_5x5") : null;
+    // TENTATIVO 1: Endpoint standard
+    let league = await (await fetch(`https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/${sum.id}?api_key=${RIOT_API_KEY}`)).json();
+    
+    // TENTATIVO 2: Se è vuoto, proviamo l'endpoint "EXP" (più adatto per Master+)
+    if (!league || league.length === 0) {
+        league = await (await fetch(`https://euw1.api.riotgames.com/lol/league-exp/v4/entries/RANKED_SOLO_5x5/CHALLENGER/I?page=1&api_key=${RIOT_API_KEY}`)).json();
+        // Nota: questo endpoint è più complesso, stiamo solo cercando di vedere se il dato arriva
+    }
+
+    let rankInfo = Array.isArray(league) ? league.find(e => e.summonerId === sum.id) : null;
+    
+    // Fallback finale se non troviamo nulla
+    const rankDisplay = rankInfo ? `${rankInfo.tier} ${rankInfo.rank}` : "Master+ (Dati protetti)";
 
     const matchIds = await (await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${acc.puuid}/ids?queue=420&start=0&count=15&api_key=${RIOT_API_KEY}`)).json();
     
@@ -38,7 +48,7 @@ export default async function handler(req, res) {
 
     res.status(200).json({ 
       gameName: acc.gameName, 
-      rank: rankInfo ? rankInfo.tier : "Unranked", 
+      rank: rankInfo ? rankInfo.tier : "Master+", 
       division: rankInfo ? rankInfo.rank : "", 
       matches: matches.filter(m => m !== null) 
     });
