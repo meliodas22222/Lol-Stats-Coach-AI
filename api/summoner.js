@@ -34,6 +34,7 @@ export default async function handler(req, res) {
           kills: p.kills,
           deaths: p.deaths,
           assists: p.assists,
+          kda: p.deaths === 0 ? (p.kills + p.assists).toFixed(2) : ((p.kills + p.assists) / p.deaths).toFixed(2),
           visionScore: p.visionScore || 0
         };
       } catch { return null; }
