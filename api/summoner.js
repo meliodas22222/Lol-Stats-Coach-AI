@@ -5,11 +5,10 @@ export default async function handler(req, res) {
   try {
     const acc = await (await fetch(`https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(name)}/${encodeURIComponent(tag)}?api_key=${RIOT_API_KEY}`)).json();
     const sum = await (await fetch(`https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${acc.puuid}?api_key=${RIOT_API_KEY}`)).json();
-    const league = await (await fetch(`https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/${sum.id}?api_key=${RIOT_API_KEY}`)).json();
     
-    // Recupero Rank (SoloQ prioritario)
-    let rankInfo = Array.isArray(league) ? league.find(e => e.queueType === "RANKED_SOLO_5x5") : null;
-    if (!rankInfo && Array.isArray(league) && league.length > 0) rankInfo = league[0];
+    // Recupero Rank
+    const league = await (await fetch(`https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/${sum.id}?api_key=${RIOT_API_KEY}`)).json();
+    const rankInfo = Array.isArray(league) ? league.find(e => e.queueType === "RANKED_SOLO_5x5") : null;
 
     const matchIds = await (await fetch(`https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${acc.puuid}/ids?queue=420&start=0&count=15&api_key=${RIOT_API_KEY}`)).json();
     
@@ -19,8 +18,8 @@ export default async function handler(req, res) {
         if (!m.info || !m.info.participants) return null;
         
         const p = m.info.participants.find(part => part.puuid === acc.puuid);
-        if (!p) return null; // Salta se i dati del partecipante mancano
-        
+        if (!p) return null;
+
         return {
           champion: p.championName,
           win: p.win,
@@ -41,7 +40,7 @@ export default async function handler(req, res) {
       gameName: acc.gameName, 
       rank: rankInfo ? rankInfo.tier : "Unranked", 
       division: rankInfo ? rankInfo.rank : "", 
-      matches: matches.filter(m => m !== null) // Rimuove eventuali null
+      matches: matches.filter(m => m !== null) 
     });
   } catch (e) { res.status(500).json({ error: e.message }); }
 }
