@@ -20,9 +20,9 @@ export default function App() {
 
       {data?.matches && (
         <div style={{ marginTop: '20px' }}>
-          <h2>{data.gameName} | <span style={{ color: '#d4af37' }}>{data.rank} {data.division}</span></h2>
+          <h2>{data.gameName} | {data.rank} {data.division}</h2>
           {data.matches.map((m, i) => {
-            if (!m) return null; // Controllo di sicurezza
+            if (!m) return null; 
             return (
               <details key={i} style={{ background: '#1a1a1a', margin: '10px 0', padding: '10px', borderLeft: `6px solid ${m.win ? 'green' : 'red'}` }}>
                 <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>
